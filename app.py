@@ -1,6 +1,6 @@
 def power_level():
     # A simple function that returns the system power level
-    return 0
+    return 100
 
 
 if __name__ == "__main__":
