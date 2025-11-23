@@ -1,5 +1,5 @@
 def power_level():
-    # A simple function that returns the system power level
+    password = "super_secret_password_123"
     return 100
 
 
