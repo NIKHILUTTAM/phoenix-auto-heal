@@ -179,7 +179,7 @@ jobs:
 
       - name: Run Security Scan
         # Scans recursively (-r). Fails only on High Severity (-lll).
-        run: bandit -r . -lll
+        run: bandit -r .
       # -------------------------
 
       - name: Run Diagnostic Test with Retry
