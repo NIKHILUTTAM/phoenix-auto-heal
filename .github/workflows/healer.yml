@@ -95,9 +95,33 @@ jobs:
           git push origin main
           echo "✅ System healed."
 
-      - name: Notify Discord
+      - name: Debug Discord Connection
         run: |
-          curl -H "Content-Type: application/json" \
-          -X POST \
-          -d '{"content": "🚨 **Alert:** Bad code detected! \n🤖 **Phoenix Bot:** I have reverted the changes and restored system health."}' \
-          ${{ secrets.DISCORD_WEBHOOK }}
+          echo "🔍 DIAGNOSTIC MODE INITIATED..."
+          
+          # 1. Check if Secret exists
+          if [ -z "${{ secrets.DISCORD_WEBHOOK }}" ]; then
+            echo "❌ CRITICAL ERROR: The 'DISCORD_WEBHOOK' secret is EMPTY."
+            echo "Action: Go to Settings > Secrets and update the value."
+            exit 1
+          else
+            echo "✅ Secret is present (Length: ${#{{ secrets.DISCORD_WEBHOOK }}} characters)."
+          fi
+
+          # 2. Check for whitespace issues (common copy-paste error)
+          SECRET="${{ secrets.DISCORD_WEBHOOK }}"
+          if [[ "$SECRET" =~ [[:space:]] ]]; then
+            echo "❌ CRITICAL ERROR: The URL contains spaces!"
+            echo "Action: You likely copied a space at the end. Re-copy the URL carefully."
+          else
+             echo "✅ URL format looks valid (no spaces)."
+          fi
+
+          # 3. Attempt a Test Ping
+          echo "📡 Attempting to contact Discord..."
+          RESPONSE=$(curl -v -H "Content-Type: application/json" \
+            -X POST \
+            -d '{"content": "🛠️ Debug Test: Phoenix Bot is checking the connection..."}' \
+            "${{ secrets.DISCORD_WEBHOOK }}" 2>&1)
+          
+          echo "$RESPONSE"
