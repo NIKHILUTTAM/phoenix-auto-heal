@@ -1,5 +1,5 @@
 def power_level():
-    password = "super_secret_password_123"
+    password = "password1234"
     return 100
 
 
