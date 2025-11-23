@@ -1,0 +1,48 @@
+name: Phoenix Auto-Heal Protocol
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: write
+
+jobs:
+  # JOB 1: CHECK HEALTH
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Run Diagnostic Test
+        # This runs test_app.py. If it fails, the job fails.
+        run: python test_app.py
+
+  # JOB 2: HEAL (Only runs if Health Check fails)
+  auto-heal:
+    needs: health-check
+    if: failure() # This is the magic trigger
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # We need history to undo changes
+
+      - name: Activate Healer Bot
+        run: |
+          git config user.name "Phoenix Bot"
+          git config user.email "phoenix-bot@github.com"
+
+      - name: Revert Bad Commit
+        run: |
+          echo "⚠️ Corruption detected. Reverting last commit..."
+          git revert --no-edit HEAD
+          git push origin main
+          echo "✅ System healed."
