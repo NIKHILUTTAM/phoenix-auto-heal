@@ -1,3 +1,130 @@
+# name: Phoenix Auto-Heal Protocol
+
+# on:
+#   push:
+#     branches: [ "main" ]
+
+# permissions:
+#   contents: write
+
+# jobs:
+#   # JOB 1: CODE BEAUTIFIER (Runs first to clean up mess)
+#   auto-format:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: actions/setup-python@v5
+#         with:
+#           python-version: '3.9'
+      
+#       - name: Install Black
+#         run: pip install black
+
+#       - name: Run Black (Formatter)
+#         run: black .
+
+#       - name: Commit Changes (If any)
+#         run: |
+#           git config user.name "Phoenix Beautifier"
+#           git config user.email "bot@example.com"
+#           if [ -n "$(git status --porcelain)" ]; then
+#             git add .
+#             # Added [skip ci] to prevent an infinite loop of builds
+#             git commit -m "🎨 Auto-formatted Python code [skip ci]" 
+#             git push
+#             echo "Code was messy. I cleaned it up."
+#           else
+#             echo "Code is already clean."
+#           fi
+
+#   # JOB 2: CHECK HEALTH
+#   health-check:
+#     needs: auto-format
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v4
+
+#       - name: Set up Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: '3.9'
+
+#       - name: Run Diagnostic Test with Retry
+#         uses: nick-fields/retry@v2
+#         with:
+#           timeout_minutes: 2
+#           max_attempts: 3
+#           command: python test_app.py
+
+#   # JOB 3: HEAL (Only runs if Health Check fails)
+#   auto-heal:
+#     needs: health-check
+#     if: failure() 
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0 
+
+#       - name: Set up Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: '3.9'
+
+#       - name: Activate Healer Bot
+#         run: |
+#           git config user.name "Phoenix Bot"
+#           git config user.email "phoenix-bot@github.com"
+
+#       - name: Capture Failure Logs
+#         run: python test_app.py > failure_log.txt 2>&1 || true
+
+#       - name: Upload Log Artifact
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: crash-report
+#           path: failure_log.txt
+
+#       - name: Revert Bad Commit
+#         run: |
+#           echo "⚠️ Corruption detected. Reverting last commit..."
+#           git revert --no-edit HEAD
+#           git push origin main
+#           echo "✅ System healed."
+
+#       - name: Debug Discord Connection
+#         run: |
+#           echo "🔍 DIAGNOSTIC MODE INITIATED..."
+          
+#           # Assign secret to a standard variable first (FIXED LOGIC)
+#           SECRET_URL="${{ secrets.DISCORD_WEBHOOK }}"
+          
+#           if [ -z "$SECRET_URL" ]; then
+#             echo "❌ CRITICAL ERROR: The 'DISCORD_WEBHOOK' secret is EMPTY."
+#             echo "Action: Go to Settings > Secrets and update the value."
+#             exit 1
+#           else
+#             # Safe way to count characters
+#             echo "✅ Secret is present (Length: ${#SECRET_URL} characters)."
+#           fi
+
+#           # Check for spaces
+#           if [[ "$SECRET_URL" =~ [[:space:]] ]]; then
+#             echo "❌ CRITICAL ERROR: The URL contains spaces!"
+#             echo "Action: You likely copied a space at the end. Re-copy the URL carefully."
+#           else
+#              echo "✅ URL format looks valid (no spaces)."
+#           fi
+
+#           # Attempt ping
+#           echo "📡 Attempting to contact Discord..."
+#           curl -v -H "Content-Type: application/json" \
+#             -X POST \
+#             -d '{"content": "🛠️ Debug Test: Phoenix Bot is checking the connection..."}' \
+#             "$SECRET_URL"
+
 name: Phoenix Auto-Heal Protocol
 
 on:
@@ -94,33 +221,9 @@ jobs:
           git push origin main
           echo "✅ System healed."
 
-      - name: Debug Discord Connection
+      - name: Notify Discord
         run: |
-          echo "🔍 DIAGNOSTIC MODE INITIATED..."
-          
-          # Assign secret to a standard variable first (FIXED LOGIC)
-          SECRET_URL="${{ secrets.DISCORD_WEBHOOK }}"
-          
-          if [ -z "$SECRET_URL" ]; then
-            echo "❌ CRITICAL ERROR: The 'DISCORD_WEBHOOK' secret is EMPTY."
-            echo "Action: Go to Settings > Secrets and update the value."
-            exit 1
-          else
-            # Safe way to count characters
-            echo "✅ Secret is present (Length: ${#SECRET_URL} characters)."
-          fi
-
-          # Check for spaces
-          if [[ "$SECRET_URL" =~ [[:space:]] ]]; then
-            echo "❌ CRITICAL ERROR: The URL contains spaces!"
-            echo "Action: You likely copied a space at the end. Re-copy the URL carefully."
-          else
-             echo "✅ URL format looks valid (no spaces)."
-          fi
-
-          # Attempt ping
-          echo "📡 Attempting to contact Discord..."
-          curl -v -H "Content-Type: application/json" \
-            -X POST \
-            -d '{"content": "🛠️ Debug Test: Phoenix Bot is checking the connection..."}' \
-            "$SECRET_URL"
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{"content": "🚨 **Alert:** Bad code detected! \n🤖 **Phoenix Bot:** I have reverted the changes and restored system health."}' \
+          ${{ secrets.DISCORD_WEBHOOK }}
